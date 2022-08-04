@@ -1,0 +1,718 @@
+---
+title: "Master program applicants' academic scores with the chance of being admitted."
+author: "Yinzhi Chen"
+date: 2021/10/22
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+library(tidyverse)
+library(car)
+library(patchwork)
+```
+## Introduction:
+
+Using the dataset of UCLA Master programs' applicants information to do the research question : what factors could influence the chance of admission to the master program?
+My interest in this area is due to we are undergraduate students currently and will experience the application of the master program in the future, so this research will help undergraduate students to understand the importance of academic scores and recognize which exams could improve the probability of being admitted.
+
+## Data source:
+
+Webiste:https://www.kaggle.com/mohansacharya/graduate-admissions
+
+## Exploratory data analysis:
+
+Table:
+
+```{r,include=FALSE}
+f <- file.choose()
+```
+
+```{r,include=FALSE}
+ivy <- read.csv(f)
+```
+
+```{r}
+set.seed(300)
+n <- nrow(ivy)
+training_indices <- sample(1:n, size=round(0.6*n))
+ivy <- ivy %>% rowid_to_column()
+train <- ivy %>% filter(rowid %in% training_indices)
+test <- ivy %>% filter(!(rowid %in% training_indices))
+```
+Put 60 percent of the data into training dataset and 40 percent of the data into testing dataset.
+
+
+```{r}
+summary(train)
+```
+Summary the dataset then get minimum, first quantile, median, mean, 3rd quantile and maximum value for all of the variables in the dataset.
+
+Figure 1:
+```{r,fig.height=3,fig.width=3,echo=FALSE}
+histo_Chance <- ggplot(data = train, aes(x=Chance.of.Admit))+
+  geom_histogram(fill = 'yellow', color = 'black', bins = 13)+
+  labs(x='Chance of Admit distribution',title='College applicants Chance of Admit')
+```
+
+```{r,fig.height=3,fig.width=3,echo=FALSE}
+histo_Chance_1 <- ggplot(data = test, aes(x=CGPA))+
+  geom_histogram(fill = 'yellow', color = 'black', bins = 13)+
+  labs(x='Chance of Admit distribution testing',title=' Chance of Admit testing')
+```
+
+
+Draw histograms for variables Chance.of.Admit in both testing and training.
+
+Then draw scatter plots for all of the predictors respond to Chance.of.admit
+
+```{r,fig.height=3,fig.width=3,echo=FALSE}
+scatter_TOEFL <- train %>%
+  ggplot(aes(x=TOEFL.Score, y=Chance.of.Admit))+
+  geom_point()+
+  geom_smooth(method = lm, se = FALSE)+
+  labs(x='university rating of each applicant',
+       y='TOEFL Score by UCLA master program',
+       title = "Chance admission by TOEFL score")
+```
+
+```{r,fig.height=3,fig.width=3,echo=FALSE}
+scatter_UR <- train %>%
+  ggplot(aes(x=University.Rating, y=Chance.of.Admit))+
+  geom_point()+
+  geom_smooth(method = lm, se = FALSE)+
+  labs(x='university rating of each applicant',
+       y='Chance of admitting by UCLA master program',
+       title = "Chance admission by university rating")
+```
+
+```{r,fig.height=3,fig.width=3,echo=FALSE}
+scatter_SOP <- train %>%
+  ggplot(aes(x=SOP, y=Chance.of.Admit))+
+  geom_point()+
+  geom_smooth(method = lm, se = FALSE)+
+  labs(x='SOP of each applicant',
+       y='Chance of admitting by UCLA master program',
+       title = "Chance admission by SOP")
+```
+
+```{r,fig.height=3,fig.width=3,echo=FALSE}
+scatter_Research <- train %>%
+  ggplot(aes(x=Research, y=Chance.of.Admit))+
+  geom_point()+
+  geom_smooth(method = lm, se = FALSE)+
+  labs(x='Research of each applicant',
+       y='Chance of admitting by UCLA master program',
+       title = "Chance admission by research")
+```
+
+```{r,fig.height=3,fig.width=3,echo=FALSE}
+scatter_LOR <- train %>%
+  ggplot(aes(x=LOR, y=Chance.of.Admit))+
+  geom_point()+
+  geom_smooth(method = lm, se = FALSE)+
+  labs(x='LOR of each applicant',
+       y='Chance of admitting by UCLA master program',
+       title = "Chance admission by LOR")
+```
+
+Draw boxplot for variables Chance.of.Admit
+```{r,fig.height=3,fig.width=3,echo=FALSE}
+scatter_CGPA <- train %>%
+  ggplot(aes(x=CGPA, y=Chance.of.Admit))+
+  geom_point()+
+  geom_smooth(method = lm, se = FALSE)+
+  labs(x='CGPA of each applicant',
+       y='Chance of admitting by UCLA master program',
+       title = "Chance admission by CGPA")
+```
+
+```{r,fig.height=3,fig.width=3,echo=FALSE}
+scatter_GRE <- train %>%
+  ggplot(aes(x=GRE.Score, y=GRE.Score))+
+  geom_point()+
+  geom_smooth(method = lm, se = FALSE)+
+  labs(x='GRE of each applicant',
+       y='Chance of admitting by UCLA master program',
+       title = "Chance admission by GRE")
+```
+Draw scatter plots for all variables respond to Chance.of.Admit in training data.
+
+Then draw scatter plots for all variables respond to Chance.of.Admit in testing data
+
+```{r,fig.height=3,fig.width=3,echo=FALSE}
+scatter_TOEFL11 <- test %>%
+  ggplot(aes(x=TOEFL.Score, y=Chance.of.Admit))+
+  geom_point()+
+  geom_smooth(method = lm, se = FALSE)+
+  labs(x='university rating of each applicant',
+       y='TOEFL Score by UCLA master program',
+       title = "Testing Chance admission by TOEFL score")
+```
+
+```{r,fig.height=3,fig.width=3,echo=FALSE}
+scatter_UR11 <- test %>%
+  ggplot(aes(x=University.Rating, y=Chance.of.Admit))+
+  geom_point()+
+  geom_smooth(method = lm, se = FALSE)+
+  labs(x='university rating of each applicant',
+       y='Chance of admitting by UCLA master program',
+       title = "Testing Chance admission by university rating")
+```
+
+```{r,fig.height=3,fig.width=3,echo=FALSE}
+scatter_SOP11 <- test %>%
+  ggplot(aes(x=SOP, y=Chance.of.Admit))+
+  geom_point()+
+  geom_smooth(method = lm, se = FALSE)+
+  labs(x='SOP of each applicant',
+       y='Chance of admitting by UCLA master program',
+       title = "Testing Chance admission by SOP")
+```
+
+```{r,fig.height=3,fig.width=3,echo=FALSE}
+scatter_Research11 <- test %>%
+  ggplot(aes(x=Research, y=Chance.of.Admit))+
+  geom_point()+
+  geom_smooth(method = lm, se = FALSE)+
+  labs(x='Research of each applicant',
+       y='Chance of admitting by UCLA master program',
+       title = "Testing Chance admission by research")
+```
+
+```{r,fig.height=3,fig.width=3,echo=FALSE}
+scatter_LOR11 <- test %>%
+  ggplot(aes(x=LOR, y=Chance.of.Admit))+
+  geom_point()+
+  geom_smooth(method = lm, se = FALSE)+
+  labs(x='LOR of each applicant',
+       y='Chance of admitting by UCLA master program',
+       title = "Testing Chance admission by LOR")
+```
+
+Draw boxplot for variables Chance.of.Admit
+```{r,fig.height=3,fig.width=3,echo=FALSE}
+scatter_CGPA11 <- test %>%
+  ggplot(aes(x=CGPA, y=Chance.of.Admit))+
+  geom_point()+
+  geom_smooth(method = lm, se = FALSE)+
+  labs(x='CGPA of each applicant',
+       y='Chance of admitting by UCLA master program',
+       title = "Testing Chance admission by CGPA")
+```
+
+```{r,fig.height=3,fig.width=3,echo=FALSE}
+scatter_GRE11 <- test %>%
+  ggplot(aes(x=GRE.Score, y=GRE.Score))+
+  geom_point()+
+  geom_smooth(method = lm, se = FALSE)+
+  labs(x='GRE of each applicant',
+       y='Chance of admitting by UCLA master program',
+       title = "Testing Chance admission by GRE")
+```
+
+```{r}
+(histo_Chance )
+(histo_Chance_1 )
+
+  (scatter_SOP | scatter_Research | scatter_UR ) /
+  (scatter_GRE | scatter_CGPA | scatter_LOR ) /
+  (scatter_TOEFL)
+  (scatter_SOP11 | scatter_Research11 | scatter_UR11 ) /
+  (scatter_GRE11 | scatter_CGPA11 | scatter_LOR11 ) /
+  (scatter_TOEFL11)
+```
+put all of the plots into one graph
+## Linear model:
+
+```{r}
+pairs(Chance.of.Admit ~ Serial.No. + GRE.Score + CGPA + TOEFL.Score + LOR + Research + University.Rating + SOP, data = train, cex.labels=0.85, main = "pairwise scatterplot matrix")
+
+```
+Using pairs to show correlation between each variables, the first row shows each predictors correlation with response variable Chance of Admit 
+
+
+##  The initial full Model:
+
+```{r}
+full <- lm(Chance.of.Admit ~ .-Serial.No., data=train)
+summary(full)
+```
+Summary the initial full model's all predictors.
+```{r}
+full_1 <- lm(Chance.of.Admit ~ .-rowid -Serial.No., data=train)
+summary(full_1)
+```
+Remove predictor rowid and serial.No because they are the row number of dataset which doesn't influence the model.
+
+
+```{r}
+vif(full_1)
+```
+All predictor variables VIF value are less than 5, so these variables are selected.
+
+```{r}
+y_hat <- fitted(full_1)
+yi <- train$Chance.of.Admit
+plot(yi,y_hat)
+```
+## check the 2 conditions
+make sure that we can use residual plots to diagnose the model.
+Condition 1 satisfied because yi and yi_hat shows a pattern
+```{r}
+pairs(Chance.of.Admit ~GRE.Score + CGPA + TOEFL.Score + LOR + Research + University.Rating + SOP, data = train, cex.labels=0.85, main = "pairwise scatterplot matrix")
+```
+Condition 2 also satisfied, each predictor is a linear function with another predictor.
+
+## Check 4 asumptions under linear regression
+Using the residual plots to identify potential violations against
+model assumptions, linearity, normality, constant variance, and uncorrelated.
+
+```{r}
+res <- rstandard(full_1)
+y_hat <- fitted(full_1)
+plot(y_hat, res)
+```
+
+The graph satisfies linearity since points are distributed randomly, also satisfies independence since points are not gathering together, but it violates the constant variance becauase it has a fanning pattern on the left side of the graph.
+
+
+```{r}
+par(mfrow = c(2, 3))
+plot(train$GRE.Score, res)
+plot(train$TOEFL.Score, res)
+plot(train$CGPA, res)
+plot(train$LOR, res)
+plot(train$SOP, res)
+plot(train$University.Rating, res)
+plot(train$Research, res)
+```
+
+
+```{r}
+qqnorm(res)
+qqline(res)
+```
+
+Our residual plots violates the assumption of normality since the left and right tails of the graph is diverging from the line.
+
+
+## Transformation
+Apply transformation on training data
+
+```{r}
+train <- train %>%
+mutate(Research = Research + 0.0000001)
+```
+Plus 0.0000001 to all of applicants research since power transform is not able to transform any 0 values.
+
+
+```{r}
+summary(powerTransform(cbind(train$Chance.of.Admit,
+                             train$GRE.Score,
+                             train$TOEFL.Score,
+                             train$Research,
+                             train$LOR,
+                             train$SOP,
+                             train$University.Rating,
+                             train$CGPA)))
+
+```
+
+```{r}
+admit_trans <- train %>%
+  mutate(Chanceadmit_trans = Chance.of.Admit^2.5,
+         GRE_trans = GRE.Score^5,
+         Research_trans = log(Research),
+         CGPA_trans = CGPA^3)
+
+```
+Apply transformation based on rounded power.
+
+```{r}
+model_trans_full <-lm(Chanceadmit_trans ~ .-rowid -Serial.No. - Chance.of.Admit - GRE.Score - Research -CGPA,
+data=admit_trans)
+```
+Add in transformed predictors and delete original predictors
+Fit a new model with the transformed variables
+
+
+## Model selection: Automated and manual selection
+
+1. Automated selection model:
+```{r}
+model_auto_selection <- step(model_trans_full, direction="both")
+```
+Summary of auto selection model:
+```{r}
+summary(model_auto_selection)
+```
+
+2. Manual selection model:
+```{r}
+summary(model_trans_full)
+```
+Manual select predictors and make a new model
+
+```{r}
+model_manual_selection<- lm(Chanceadmit_trans ~ TOEFL.Score + GRE_trans + CGPA_trans + LOR, data=admit_trans)
+```
+
+## Compare auto selected model with manual selected model
+```{r}
+anova(model_auto_selection, model_trans_full)
+```
+p value is 0.6248 which proves that reduced model is better than full model
+
+```{r}
+anova(model_manual_selection, model_trans_full)
+```
+p value is 0.0006148 which proves that full model is better than manual selected model.
+
+Calculating R Square, AIC and BIC
+```{r}
+summary(model_trans_full)$adj.r.squared
+summary(model_auto_selection)$adj.r.squared
+summary(model_manual_selection)$adj.r.squared
+```
+For R square value of a model, the bigger it is the better it is, so the second has the smallest value so the auto selected model is the best.
+
+```{r}
+AIC(model_trans_full)
+AIC(model_auto_selection)
+AIC(model_manual_selection)
+```
+For AIC value of a model, the smaller it is the better it is, the second model auto selected model has the smallest value so auto selected model is the best.
+
+```{r}
+BIC(model_trans_full)
+BIC(model_auto_selection)
+BIC(model_manual_selection)
+```
+For BIC value of a model, the smaller it is the better it is, the second model auto selected model has the smallest value so auto selected model is the best.
+
+
+## For model of auto selection in training data
+determine whether Leverage Point, Outlier, and Influential Point
+
+First, checking leverage points
+```{r}
+k <- hatvalues(model_auto_selection)
+threshold <- 2*(length(model_auto_selection$coefficients)/nrow(admit_trans))
+which(k > threshold)
+```
+show these rows of leverage points
+```{r}
+admit_trans[c(35,38,39,72,82,88,150,175,256,266,284,296),]
+```
+
+Second, check outlier
+```{r}
+stan <- rstandard(model_auto_selection)
+which(abs(stan)>4)
+```
+show the row of outlier point
+```{r}
+admit_trans[42,]
+```
+
+Using cook distance to check influential points
+```{r}
+D0 <- cooks.distance(model_auto_selection)
+cutoff_D0 <- qf(0.5,
+               length(model_auto_selection$coefficients),
+               nrow(admit_trans)-length(model_auto_selection$coefficients))
+which(D0 > cutoff_D0)
+```
+So there's no influential points
+
+## For model of manual selection in training data
+
+determine whether Leverage Point, Outlier, and Influential Point
+
+First, checking leverage points
+```{r}
+k0 <- hatvalues(model_manual_selection)
+threshold0 <- 2*(length(model_manual_selection$coefficients)/nrow(admit_trans))
+which(k0 > threshold0)
+```
+show these rows of leverage points
+```{r}
+admit_trans[c(23,33,35,37,38,94,150,175,176, 209, 252, 256, 260, 266, 283, 284),]
+```
+
+Second, check outlier
+```{r}
+stan1 <- rstandard(model_manual_selection)
+which(abs(stan1)>4)
+```
+show these rows of outliers
+```{r}
+admit_trans[c(7,42),]
+```
+
+Using cook distance to check influential ppoints
+```{r}
+D1 <- cooks.distance(model_manual_selection)
+cutoff_D1 <- qf(0.5,
+               length(model_manual_selection$coefficients),
+               nrow(admit_trans)-length(model_manual_selection$coefficients))
+which(D1 > cutoff_D1)
+```
+So there's no influential points
+
+## Check auto selection models diagonostic plots
+
+condition 1:
+```{r}
+y_hat <- fitted(model_auto_selection)
+yi <- admit_trans$Chance.of.Admit
+plot(yi,y_hat)
+```
+Condition 1 Satisfied
+
+condition 2: scatterplots between predictors 
+```{r}
+pairs(~GRE_trans + TOEFL.Score + LOR + University.Rating + Research_trans + CGPA_trans, data = admit_trans)
+
+```
+Condition 2 satisifed:each predictor is a linear function with another predictor.
+
+## Check assumptions of the auto selection model
+Residual Plot
+Residual vs. Fitted
+```{r}
+res <- rstandard(model_auto_selection)
+y_hat <- fitted(model_auto_selection)
+plot(y_hat, res)
+```
+Linearity satisifed, constant variance also satisfied but with very few outliers, 
+Residual vs. Predictors and independence satisfied, points are distributed randomly.
+```{r}
+par(mfrow = c(2, 3))
+plot(admit_trans$GRE_trans, res)
+plot(admit_trans$TOEFL.Score, res)
+plot(admit_trans$University.Rating, res)
+plot(admit_trans$CGPA_trans, res)
+plot(admit_trans$LOR, res)
+plot(admit_trans$Research_trans, res)
+```
+
+Residual QQ Plot check normality
+```{r}
+qqnorm(res)
+qqline(res)
+```
+Normality gets better than before.
+
+## Check manual selection models diagonostic plots
+condition 1:
+```{r}
+y_hat0 <- fitted(model_manual_selection)
+yi0 <- admit_trans$Chance.of.Admit
+plot(yi0,y_hat0)
+```
+
+condition 2: scatter plots between predictors 
+```{r}
+pairs(~TOEFL.Score + GRE_trans + CGPA_trans + LOR, data = admit_trans)
+
+```
+Condition 2 satisifed:each predictor is a linear function with another predictor.
+
+## Check assumptions of the manual selection model
+Residual Plot
+Residual vs. Fitted
+```{r}
+res1 <- rstandard(model_manual_selection)
+y_hat1 <- fitted(model_manual_selection)
+plot(y_hat1, res1)
+```
+Linearity satisifed, constant variance also satisfied but with very few outliers, 
+Residual vs. Predictors and independence satisfied, points are distributed randomly.
+Residual vs. Predictors
+```{r}
+par(mfrow = c(2, 2))
+plot(admit_trans$GRE_trans, res1)
+plot(admit_trans$TOEFL.Score, res1)
+plot(admit_trans$CGPA_trans, res1)
+plot(admit_trans$LOR, res1)
+```
+
+Residual QQ Plot check normality
+```{r}
+qqnorm(res1)
+qqline(res1)
+```
+
+Normality gets better than full model.
+
+## Model Validation
+
+EDA for testing data
+
+```{r}
+summary(test)
+```
+Summary the dataset then get minimum, first quantile, median, mean, 3rd quantile and maximum value for all of the variables in the dataset.
+
+```{r}
+test <- test %>%
+mutate(Research = Research + 0.0000001)
+```
+Plus 0.0000001 to all of applicants research since power transform is not able to transform any 0 values.
+
+```{r}
+test_trans <- test %>%
+  mutate(Chanceadmit_trans = Chance.of.Admit^2.5,
+         GRE_trans = GRE.Score^5,
+         Research_trans = log(Research),
+         CGPA_trans = CGPA^3)
+
+```
+
+Refit the 2 models on testing data:
+
+Auto selection model:
+```{r}
+model_auto_selection_test <- lm(Chanceadmit_trans ~ TOEFL.Score + University.Rating + LOR + GRE_trans + CGPA_trans + Research_trans, data=test_trans  )
+```
+
+Manual selection model:
+```{r}
+model_manual_selection_test <- lm(Chanceadmit_trans ~ TOEFL.Score + LOR + GRE_trans + CGPA_trans, data=test_trans  )
+```
+
+compare with the summary of training auto selection model, compare Beta hat and significance status of each predictors and adjusted R square value
+```{r}
+summary(model_auto_selection_test)
+```
+compare with the summary of training manual selection model, compare Beta hat and significance status of each predictors and adjusted R square value 
+```{r}
+summary(model_manual_selection_test)
+```
+## Compare traning data models and testing data models diagnostic plots
+
+For auto selection model in testing data
+```{r}
+res2 <- rstandard(model_auto_selection_test)
+y_hat2 <- fitted(model_auto_selection_test)
+plot(y_hat2, res2)
+```
+
+Residual vs. Predictors
+```{r}
+par(mfrow = c(2, 3))
+plot(test_trans$GRE_trans, res2)
+plot(test_trans$TOEFL.Score, res2)
+plot(test_trans$University.Rating, res2)
+plot(test_trans$CGPA_trans, res2)
+plot(test_trans$LOR, res2)
+plot(test_trans$Research_trans, res2)
+```
+
+```{r}
+qqnorm(res2)
+qqline(res2)
+```
+Normality is better than traning data's graph
+For auto selection model in testing data
+```{r}
+res3 <- rstandard(model_manual_selection_test)
+y_hat3 <- fitted(model_manual_selection_test)
+plot(y_hat3, res3)
+```
+All assumptions satisfied.
+```{r}
+par(mfrow = c(2, 2))
+plot(test_trans$GRE_trans, res3)
+plot(test_trans$TOEFL.Score, res3)
+plot(test_trans$CGPA_trans, res3)
+plot(test_trans$LOR, res3)
+```
+
+```{r}
+qqnorm(res3)
+qqline(res3)
+```
+Normality approximately satisfied
+
+## Compare training and testing data models' leverage points, outliers, and influential points
+
+For auto selection model in testing data
+Check leverage point
+```{r}
+h2 <- hatvalues(model_auto_selection_test)
+threshold2 <- 2*(length(model_auto_selection_test$coefficients)/nrow(test_trans))
+which(h2 > threshold2)
+```
+```{r}
+test_trans[c(6 , 18 , 19 , 43 ,106 ,164, 172, 174, 184, 194, 198, 199 ),]
+```
+Check outliers
+```{r}
+std_res2 <- rstandard(model_auto_selection_test)
+which(abs(std_res2)>4)
+```
+
+```{r}
+test_trans[24,]
+```
+
+Check influence points using Cook's Distance
+```{r}
+D3 <- cooks.distance(model_auto_selection_test)
+cutoff_D3 <- qf(0.5,
+                length(model_auto_selection_test$coefficients),
+                nrow(test_trans)-length(model_auto_selection_test$coefficients))
+which(D3 > cutoff_D3)
+```
+
+For manual selection model in testing data
+Check leverage point
+```{r}
+h3 <- hatvalues(model_manual_selection_test)
+threshold3 <- 2*(length(model_manual_selection_test$coefficients)/nrow(test_trans))
+which(h3 > threshold3)
+```
+```{r}
+test_trans[c(6,11 , 19 ,106, 107 ,109, 118, 138 ,146 ,164, 172 ,178 ,184 ,197 ,198 ),]
+```
+Check outliers
+```{r}
+std_res3 <- rstandard(model_manual_selection_test)
+which(abs(std_res3)>4)
+```
+```{r}
+test_trans[24,]
+```
+
+Check influence points using Cook's Distance
+
+```{r}
+D4 <- cooks.distance(model_manual_selection_test)
+cutoff_D4 <- qf(0.5,
+length(model_manual_selection_test$coefficients),
+nrow(test_trans)-length(model_manual_selection_test$coefficients))
+which(D4 > cutoff_D4)
+```
+
+## Conclusion
+
+Based on ANOVA table, R adj, AIC, BIC, diagnostic plot and model validation, we will choose auto selected model as our final model.
+
+## Limitation
+
+Dataset contains a lot of leverage points and outliers, since all of the applicants' score are reasonable although some of them have a big gap than other applicants but it's still valid point, so it may affect the model somehow but it is still acceptable.
+
+
+
+
+
+
+
+
+
+
